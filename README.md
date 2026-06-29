@@ -117,8 +117,8 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/Simple-WAF-Demo.git
-cd Simple-WAF-Demo
+git clone https://github.com/cvv-1/Simple-WAF-Demo.git
+cd Simple-WAF-Demo.git
 
 # 2. 创建虚拟环境（推荐）
 python -m venv .venv
