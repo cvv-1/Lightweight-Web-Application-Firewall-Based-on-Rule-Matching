@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>权限管理 - 用户: {{ target_user.username }}</h1>
+
+    <p>Debug Info:</p>
+    <ul>
+        <li>Target User: {{ target_user.username }} (ID: {{ target_user.id }})</li>
+        <li>Categories Count: {{ permissions_by_category|length }}</li>
+        <li>User Permission IDs: {{ user_permission_ids }}</li>
+    </ul>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% for category, permissions in permissions_by_category.items %}
+        <div style="margin: 20px 0; padding: 15px; border: 1px solid #ccc;">
+            <h3>{{ category }}</h3>
+            {% for perm in permissions %}
+            <div style="margin: 10px 0;">
+                <label>
+                    <input type="checkbox" name="permissions" value="{{ perm.id }}"
+                           {% if perm.id in user_permission_ids %}checked{% endif %}>
+                    {{ perm.name }} - {{ perm.description }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        {% empty %}
+        <p>No categories found!</p>
+        {% endfor %}
+
+        <button type="submit">保存权限</button>
+        <a href="{% url 'user_list' %}">返回</a>
+    </form>
+{% endblock %}

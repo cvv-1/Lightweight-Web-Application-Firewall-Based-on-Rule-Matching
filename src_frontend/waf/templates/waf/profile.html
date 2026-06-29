@@ -1,0 +1,696 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}个人资料 - WAF管理系统{% endblock %}
+
+{% block content %}
+<style>
+    /* 个人资料页面样式 */
+    .profile-container {
+        display: flex;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    /* 左侧个人信息卡片 */
+    .profile-sidebar {
+        flex: 0 0 280px;
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 80px;
+    }
+    
+    .avatar-section {
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        margin: 0 auto 15px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .profile-name {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .profile-role {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .profile-info-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .profile-info-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .info-icon {
+        color: #667eea;
+        margin-right: 12px;
+        font-size: 16px;
+        min-width: 20px;
+        text-align: center;
+        margin-top: 2px;
+    }
+    
+    .info-label {
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+    
+    .info-value {
+        color: #333;
+        font-size: 14px;
+    }
+    
+    /* 右侧内容区域 */
+    .profile-content {
+        flex: 1;
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .profile-header h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #333;
+    }
+    
+    /* 标签页样式 */
+    .profile-tabs {
+        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 25px;
+    }
+    
+    .tab-nav {
+        display: flex;
+        gap: 20px;
+    }
+    
+    .tab-item {
+        padding: 12px 0;
+        color: #666;
+        font-weight: 500;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.3s;
+    }
+    
+    .tab-item:hover {
+        color: #667eea;
+    }
+    
+    .tab-item.active {
+        color: #667eea;
+    }
+    
+    .tab-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #667eea;
+    }
+    
+    /* 表单样式 */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-control:disabled {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+    
+    /* 按钮样式 */
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+        font-size: 14px;
+    }
+    
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #5a67d8;
+    }
+    
+    .btn-secondary {
+        background: #f5f5f5;
+        color: #666;
+        border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+        background: #e9ecef;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .profile-container {
+            flex-direction: column;
+        }
+        
+        .profile-sidebar {
+            position: static;
+        }
+    }
+    
+    /* 模态框样式 */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .modal-content {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        width: 400px;
+        max-width: 90%;
+        padding: 0;
+        overflow: hidden;
+        animation: slideIn 0.3s ease-out;
+        transform-origin: center;
+    }
+    
+    @keyframes slideIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    .modal-header {
+        background-color: #f8f9fa;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    /* 成功模态框头部样式 */
+    .success-modal .modal-header {
+        background-color: #f1f8e9;
+        border-bottom-color: #dcedc8;
+    }
+    
+    .success-modal .modal-header h3 {
+        color: #558b2f;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.3s;
+    }
+    
+    .modal-close:hover {
+        color: #333;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-message {
+        margin: 0;
+        font-size: 16px;
+        color: #555;
+        text-align: center;
+        line-height: 1.5;
+    }
+    
+    /* 成功消息样式 */
+    .success-modal .modal-message {
+        color: #2e7d32;
+    }
+    
+    .modal-footer {
+        padding: 0 24px 24px;
+        text-align: center;
+    }
+    
+    .modal-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 32px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 500;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    .modal-btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-1px);
+    }
+    
+    .modal-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* 成功按钮样式 */
+    .success-btn {
+        background-color: #4caf50;
+    }
+    
+    .success-btn:hover {
+        background-color: #388e3c;
+    }
+</style>
+
+
+<div id="page-wrapper">
+    <div id="page-inner">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-title">
+                    <span class="page-title-icon">
+                        <i class="fa fa-user-circle"></i>
+                    </span>
+                    个人资料
+                    <small style="margin-left: 10px; font-weight: normal; font-size: 14px; color: #666;">用户信息</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-container">
+            <!-- 左侧个人信息卡片 -->
+            <div class="profile-sidebar">
+                <div class="avatar-section">
+                    <div class="profile-avatar">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.username }}的头像" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            {{ user.username|first|upper }}
+                        {% endif %}
+                    </div>
+                    <h3 class="profile-name">{{ user.username }}</h3>
+                    <p class="profile-role">{{ user.get_user_type_display }}</p>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 10px;" onclick="document.getElementById('avatar-upload').click();">
+                        <i class="fa fa-upload"></i> 更换头像
+                    </button>
+                </div>
+                
+                <div class="profile-info">
+                    <div class="profile-info-item">
+                        <div class="info-icon">
+                            <i class="fa fa-envelope-o"></i>
+                        </div>
+                        <div>
+                            <div class="info-label">邮箱</div>
+                            <div class="info-value">{{ user.email|default:'未设置' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-info-item">
+                        <div class="info-icon">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <div>
+                            <div class="info-label">注册时间</div>
+                            <div class="info-value">{{ user.date_joined|date:'Y-m-d H:i' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-info-item">
+                        <div class="info-icon">
+                            <i class="fa fa-sign-in"></i>
+                        </div>
+                        <div>
+                            <div class="info-label">最后登录</div>
+                            <div class="info-value">
+                                {% if user.last_login %}
+                                    {{ user.last_login|date:'Y-m-d H:i' }}
+                                {% else %}
+                                    从未登录
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧内容区域 -->
+            <div class="profile-content">
+                <div class="profile-header">
+                    <h2>编辑个人信息</h2>
+                </div>
+                
+                <div class="profile-tabs">
+                    <div class="tab-nav">
+                        <div class="tab-item active" data-tab="basic">基本信息</div>
+                        <div class="tab-item" data-tab="security">安全设置</div>
+                    </div>
+                </div>
+                
+                <!-- 基本信息标签页内容 -->
+                <div class="tab-content" id="basic-content">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <!-- 隐藏的头像上传输入框 -->
+                        <input type="file" id="avatar-upload" name="avatar" accept="image/jpeg,image/png,image/gif" style="display: none;" onchange="this.form.submit();">
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="username">用户名</label>
+                            <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="email">邮箱地址</label>
+                            <input type="email" id="email" name="email" class="form-control" value="{{ user.email|default:'' }}" placeholder="请输入邮箱地址">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="user_type">用户角色</label>
+                            <input type="text" id="user_type" class="form-control" value="{{ user.get_user_type_display }}" disabled>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="date_joined">注册日期</label>
+                            <input type="text" id="date_joined" class="form-control" value="{{ user.date_joined|date:'Y-m-d H:i:s' }}" disabled>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                            <button type="button" class="btn btn-secondary" onclick="window.location.href='/index';">返回</button>
+                        </div>
+                    </form>
+                    
+                    <!-- 消息提示 -->
+                    {% if request.GET.success == 'profile_updated' %}
+                    <script>
+                        // 显示成功消息
+                        var successModal = document.getElementById('successModal');
+                        var successMessage = document.getElementById('successMessage');
+                        if (successModal && successMessage) {
+                            successMessage.textContent = '个人信息已成功更新！';
+                            successModal.style.display = 'flex';
+                        }
+                    </script>
+                    {% elif request.GET.error %}
+                    <script>
+                        // 显示错误消息
+                        var errorModal = document.getElementById('errorModal');
+                        var errorMessage = document.getElementById('errorMessage');
+                        if (errorModal && errorMessage) {
+                            var errorMsg = '';
+                            if ('{{ request.GET.error }}' === 'username_exists') {
+                                errorMsg = '用户名已存在，请选择其他用户名。';
+                            } else if ('{{ request.GET.error }}' === 'invalid_image') {
+                                errorMsg = '请上传有效的图片文件（JPG、PNG、GIF）。';
+                            } else if ('{{ request.GET.error }}' === 'image_too_large') {
+                                errorMsg = '图片大小不能超过2MB。';
+                            }
+                            errorMessage.textContent = errorMsg;
+                            errorModal.style.display = 'flex';
+                        }
+                    </script>
+                    {% endif %}
+                </div>
+                
+                <!-- 安全设置标签页内容 -->
+                <div class="tab-content" id="security-content" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">密码管理</label>
+                        <p style="color: #666; margin-bottom: 20px;">如需修改密码，请通过邮箱联系：{{ admin_email|default:'未设置管理员邮箱' }}</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">最近登录记录</label>
+                        <div class="login-history">
+                            {% if user.last_login %}
+                                <div class="history-item">
+                                    <div style="font-size: 14px; color: #333;">{{ user.last_login|date:'Y-m-d H:i:s' }}</div>
+                                    <div style="font-size: 12px; color: #999; margin-top: 5px;">上次登录时间</div>
+                                </div>
+                            {% else %}
+                                <div class="history-item">
+                                    <div style="font-size: 14px; color: #333;">从未登录</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 错误提示模态框 -->
+<div id="errorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>提示</h3>
+            <button id="closeModalError" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <p id="errorMessage" class="modal-message">用户名已存在，请使用其他用户名</p>
+        </div>
+        <div class="modal-footer">
+            <button id="confirmModalError" class="modal-btn">确定</button>
+        </div>
+    </div>
+</div>
+
+<!-- 成功提示模态框 -->
+<div id="successModal" class="modal success-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>成功</h3>
+            <button id="closeModalSuccess" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <p id="successMessage" class="modal-message">个人资料更新成功</p>
+        </div>
+        <div class="modal-footer">
+            <button id="confirmModalSuccess" class="modal-btn success-btn">确定</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取错误模态框元素
+        const errorModal = document.getElementById('errorModal');
+        const closeModalErrorBtn = document.getElementById('closeModalError');
+        const confirmModalErrorBtn = document.getElementById('confirmModalError');
+        
+        // 获取成功模态框元素
+        const successModal = document.getElementById('successModal');
+        const closeModalSuccessBtn = document.getElementById('closeModalSuccess');
+        const confirmModalSuccessBtn = document.getElementById('confirmModalSuccess');
+        
+        // 显示错误模态框的函数
+        function showErrorModal() {
+            errorModal.style.display = 'flex';
+            // 阻止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 隐藏错误模态框的函数
+        function hideErrorModal() {
+            errorModal.style.display = 'none';
+            // 恢复背景滚动
+            document.body.style.overflow = '';
+        }
+        
+        // 显示成功模态框的函数
+        function showSuccessModal() {
+            successModal.style.display = 'flex';
+            // 阻止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 隐藏成功模态框的函数
+        function hideSuccessModal() {
+            successModal.style.display = 'none';
+            // 恢复背景滚动
+            document.body.style.overflow = '';
+        }
+        
+        // 绑定错误模态框关闭事件
+        closeModalErrorBtn.addEventListener('click', hideErrorModal);
+        confirmModalErrorBtn.addEventListener('click', hideErrorModal);
+        
+        // 点击错误模态框外部关闭
+        errorModal.addEventListener('click', function(event) {
+            if (event.target === errorModal) {
+                hideErrorModal();
+            }
+        });
+        
+        // 绑定成功模态框关闭事件
+        closeModalSuccessBtn.addEventListener('click', hideSuccessModal);
+        confirmModalSuccessBtn.addEventListener('click', hideSuccessModal);
+        
+        // 点击成功模态框外部关闭
+        successModal.addEventListener('click', function(event) {
+            if (event.target === successModal) {
+                hideSuccessModal();
+            }
+        });
+        
+        // 按ESC键关闭任何打开的模态框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (errorModal.style.display === 'flex') {
+                    hideErrorModal();
+                } else if (successModal.style.display === 'flex') {
+                    hideSuccessModal();
+                }
+            }
+        });
+        
+        // 检查URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 检查是否有错误信息
+        if (urlParams.get('error') === 'username_exists') {
+            // 显示错误模态框
+            showErrorModal();
+            
+            // 清除URL中的错误参数
+            const url = new URL(window.location);
+            url.searchParams.delete('error');
+            window.history.replaceState({}, document.title, url);
+        }
+        
+        // 检查是否有成功信息
+        if (urlParams.get('success') === 'profile_updated') {
+            // 显示成功模态框
+            showSuccessModal();
+            
+            // 清除URL中的成功参数
+            const url = new URL(window.location);
+            url.searchParams.delete('success');
+            window.history.replaceState({}, document.title, url);
+        }
+        
+        // 标签页切换功能
+        const tabItems = document.querySelectorAll('.tab-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const tab = this.getAttribute('data-tab');
+                
+                // 移除所有标签的active状态
+                tabItems.forEach(i => i.classList.remove('active'));
+                // 隐藏所有内容
+                tabContents.forEach(content => content.style.display = 'none');
+                
+                // 添加当前标签的active状态
+                this.classList.add('active');
+                // 显示对应内容
+                document.getElementById(tab + '-content').style.display = 'block';
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,852 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>简单WAF系统</title>
+    <!-- Bootstrap Styles-->
+    <link href="{% static 'waf/css/bootstrap.css' %}" rel="stylesheet"/>
+    <!-- FontAwesome Styles-->
+    <link href="{% static 'waf/css/font-awesome.css' %}" rel="stylesheet"/>
+    <!-- Morris Chart Styles-->
+    <link href="{% static 'waf/js/morris/morris-0.4.3.min.css' %}" rel="stylesheet"/>
+    <!-- Custom Styles-->
+    <style>
+        /* 全局样式重置 */
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+        
+        /* 侧边栏样式 - 现代化设计 */
+        .sidebar {
+            width: 180px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            z-index: 100;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        /* 顶部导航栏样式 */
+        .navbar {
+            margin-left: 180px;
+            height: 70px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .sidebar.collapsed ~ .navbar {
+            margin-left: 70px;
+        }
+        
+        /* 主内容区域 */
+        .content {
+            margin-left: 180px;
+            padding: 30px;
+            min-height: 100vh;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar.collapsed ~ .content {
+            margin-left: 70px;
+        }
+        
+        /* 侧边栏品牌/标题 - 增强视觉效果 */
+        .sidebar-header {
+            padding: 20px 15px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 20px 10px;
+        }
+        
+        .sidebar-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-header::after {
+            left: 30%;
+            width: 40%;
+        }
+        
+        .sidebar-brand {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-brand {
+            font-size: 0;
+        }
+        
+        .sidebar-brand::before {
+            content: '🛡️';
+            margin-right: 8px;
+            font-size: 20px;
+            display: inline-block;
+        }
+        
+        .sidebar.collapsed .sidebar-brand::before {
+            margin-right: 0;
+            font-size: 24px;
+        }
+        
+        /* 侧边栏菜单项 - 现代化设计 */
+        .sidebar-menu {
+            list-style: none;
+            padding: 15px 0;
+            margin: 0;
+        }
+
+        .sidebar-menu > li {
+            margin: 5px 10px;
+        }
+
+        .sidebar-menu > li > a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 13px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .sidebar-menu > li > a {
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .sidebar-menu > li > a span {
+            display: none;
+        }
+
+        .sidebar-menu > li > a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-menu > li > a:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .sidebar-menu > li > a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-menu > li.active > a {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .sidebar-menu > li.active > a::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-menu > li > a > i {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+            opacity: 0.9;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .sidebar-menu > li > a > i {
+            margin-right: 0;
+            width: auto;
+        }
+
+        .sidebar-menu > li > a > span {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu > li.active > a > i,
+        .sidebar-menu > li > a:hover > i {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* 子菜单样式 */
+        .sidebar-submenu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .sidebar-menu > li.has-submenu.active > .sidebar-submenu,
+        .sidebar-menu > li.has-submenu > .sidebar-submenu[style*="max-height: 500px"] {
+            max-height: 500px;
+        }
+
+        .sidebar-submenu > li {
+            margin: 5px 10px;
+        }
+
+        .sidebar-submenu > li > a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-left: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-submenu > li > a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-submenu > li > a:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .sidebar-submenu > li > a:hover::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-submenu > li.active > a {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .sidebar-submenu > li.active > a::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-submenu > li > a > i {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+            opacity: 0.9;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-submenu > li.active > a > i,
+        .sidebar-submenu > li > a:hover > i {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .sidebar.collapsed .sidebar-submenu > li > a {
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .sidebar-submenu > li > a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-submenu > li > a > i {
+            margin-right: 0;
+            width: auto;
+        }
+
+        .sidebar-menu > li.has-submenu > a > .submenu-arrow {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+
+        .sidebar-menu > li.has-submenu.active > a > .submenu-arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* 顶部导航栏系统名称 */
+        .navbar-brand {
+            padding: 0 20px;
+            height: 60px;
+            line-height: 60px;
+            color: #2c3e50 !important;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* 用户菜单 - 右上角图标样式 */
+        .user-menu {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        .user-menu > a {
+            color: #2c3e50;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            margin: 0;
+        }
+        
+        .user-menu > a:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.05);
+        }
+        
+        .user-menu .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+        
+        .user-menu .user-avatar:hover {
+            background-color: #2980b9;
+            transform: scale(1.1);
+        }
+        
+        /* 下拉菜单优化 */
+        .user-menu .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 180px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: none;
+            padding: 8px 0;
+            margin-top: 5px;
+        }
+        
+        .user-menu .dropdown-menu li a {
+            padding: 10px 20px;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+        
+        .user-menu .dropdown-menu li a:hover {
+            background-color: #f8f9fa;
+            color: #3498db;
+        }
+        
+        .user-menu .dropdown-menu .divider {
+            margin: 8px 0;
+            background-color: #eee;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 180px;
+            }
+            
+            .sidebar.collapsed {
+                width: 70px;
+            }
+            
+            .navbar,
+            .content {
+                margin-left: 0;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+        
+        /* 收缩状态下的工具提示 */
+        .sidebar.collapsed .sidebar-menu > li > a {
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu > li > a:hover::after {
+            content: attr(data-title);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        /* 表格样式 */
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* 标题样式 */
+        .page-title {
+            margin-bottom: 30px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        
+        /* 统计数字卡片 */
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .stat-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+
+<body>
+    {% if user.is_authenticated %}
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="/index" class="sidebar-brand">
+                    简单WAF系统
+                </a>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="{% if request.path == '/' or request.path == '/index' %}active{% endif %}">
+                <a href="/index" data-title="总览">
+                    <i class="fa fa-dashboard"></i>
+                    <span>总览</span>
+                </a>
+            </li>
+            {% if 'view_logs' in user_permissions or user.user_type == 'ADMIN' %}
+            <li class="{% if request.path == '/log' %}active{% endif %}">
+                <a href="/log" data-title="日志">
+                    <i class="fa fa-file-text"></i>
+                    <span>日志</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if 'view_rules' in user_permissions or user.user_type == 'ADMIN' %}
+            <li class="{% if request.path == '/rule' %}active{% endif %}">
+                <a href="/rule" data-title="规则">
+                    <i class="fa fa-shield"></i>
+                    <span>规则</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if 'view_whitelist' in user_permissions or user.user_type == 'ADMIN' %}
+            <li class="{% if request.path == '/Whitelist' %}active{% endif %}">
+                <a href="/Whitelist" data-title="白名单">
+                    <i class="fa fa-check-circle"></i>
+                    <span>白名单</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if 'view_blacklist' in user_permissions or user.user_type == 'ADMIN' %}
+            <li class="{% if request.path == '/Blacklist' %}active{% endif %}">
+                <a href="/Blacklist" data-title="黑名单">
+                    <i class="fa fa-ban"></i>
+                    <span>黑名单</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if 'view_sites' in user_permissions or user.user_type == 'ADMIN' %}
+            <li class="{% if request.path == '/Site' %}active{% endif %}">
+                <a href="/Site" data-title="站点管理">
+                    <i class="fa fa-home"></i>
+                    <span>站点管理</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if user.user_type == 'ADMIN' %}
+            <li class="has-submenu {% if request.path == '/user_list' or request.path == '/user_permissions' or request.path == '/login_log' or request.path == '/operation_log' %}active{% endif %}">
+                <a href="javascript:void(0);" onclick="return false;" data-title="系统管理">
+                    <i class="fa fa-cog"></i>
+                    <span>系统管理</span>
+                    <span class="submenu-arrow"><i class="fa fa-chevron-down"></i></span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li class="{% if request.path == '/user_list' %}active{% endif %}">
+                        <a href="/user_list">
+                            <i class="fa fa-users"></i>
+                            <span>用户管理</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.path == '/login_log' %}active{% endif %}">
+                        <a href="/login_log">
+                            <i class="fa fa-sign-in"></i>
+                            <span>登录日志</span>
+                        </a>
+                    </li>
+                    <li class="{% if request.path == '/operation_log' %}active{% endif %}">
+                        <a href="/operation_log">
+                            <i class="fa fa-list"></i>
+                            <span>操作日志</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% endif %}
+        </ul>
+    </aside>
+    
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="sr-only">切换导航</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/index">简单WAF系统</a>
+            </div>
+            
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav user-menu">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                            <div class="user-avatar">
+                                {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" alt="用户头像" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                <i class="fa fa-user-circle-o" style="font-size: 24px; color: #666;"></i>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li><a href="#" class="dropdown-item">
+                                <i class="fa fa-user-o mr-2"></i>
+                                {{ user.username }} ({{ user.get_user_type_display }})
+                            </a></li>
+                            <li><a href="{% url 'profile' %}" class="dropdown-item">
+                                <i class="fa fa-user-circle mr-2"></i>
+                                个人资料
+                            </a></li>
+                            <li class="divider"></li>
+                            <li><a href="{% url 'logout' %}"><i class="fa fa-sign-out mr-2"></i>退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主内容区域 -->
+    <main class="content">
+        <!-- Django消息框架显示区域 -->
+        {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert" style="padding: 12px 20px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid {% if message.tags == 'success' %}#28a745{% elif message.tags == 'error' or message.tags == 'danger' %}#dc3545{% else %}#ffc107{% endif %}; background-color: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' or message.tags == 'danger' %}#f8d7da{% else %}#fff3cd{% endif %}; color: {% if message.tags == 'success' %}#155724{% elif message.tags == 'error' or message.tags == 'danger' %}#721c24{% else %}#856404{% endif %};">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="float: right; font-size: 20px; font-weight: bold; line-height: 1; color: inherit; opacity: 0.5; background: transparent; border: none; cursor: pointer;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <strong>{% if message.tags == 'success' %}成功：{% elif message.tags == 'error' or message.tags == 'danger' %}错误：{% else %}提示：{% endif %}</strong>{{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% block content %}
+        <!-- 内容将由子模板填充 -->
+        {% endblock %}
+    </main>
+    {% else %}
+    <!-- 未登录状态 -->
+    <main class="content">
+        {% block login_content %}
+        <!-- 登录内容将由子模板填充 -->
+        {% endblock %}
+    </main>
+    {% endif %}
+
+    <!-- JS Scripts-->
+    <!-- jQuery Js -->
+    <script src="{% static 'waf/js/jquery-1.10.2.js' %}"></script>
+    <!-- Bootstrap Js -->
+    <script src="{% static 'waf/js/bootstrap.min.js' %}"></script>
+    <!-- Metis Menu Js -->
+    <script src="{% static 'waf/js/jquery.metisMenu.js' %}"></script>
+    <!-- Morris Chart Js -->
+    <script src="{% static 'waf/js/morris/raphael-2.1.0.min.js' %}"></script>
+    <script src="{% static 'waf/js/morris/morris.js' %}"></script>
+    <!-- Chart Js -->
+    <script src="{% static 'waf/js/easypiechart.js' %}"></script>
+    <script src="{% static 'waf/js/easypiechart-data.js' %}"></script>
+    <script src="{% static 'waf/js/Lightweight-Chart/jquery.chart.js' %}"></script>
+    <!-- Custom Js -->
+    <script>
+        // 页面加载完成后执行
+        $(document).ready(function() {
+
+            // 激活当前菜单项和父菜单
+            const currentPath = window.location.pathname;
+
+            // 首先检查子菜单项
+            let foundSubmenu = false;
+            $('.sidebar-submenu > li > a').each(function() {
+                const href = $(this).attr('href');
+                if (currentPath === href) {
+                    foundSubmenu = true;
+                    // 激活子菜单项
+                    $(this).parent().addClass('active');
+                    // 激活父菜单 - 确保添加 active 类
+                    const parentMenu = $(this).closest('.has-submenu');
+                    parentMenu.addClass('active');
+                    // 确保 max-height 被设置为允许显示
+                    parentMenu.find('.sidebar-submenu').css('max-height', '500px');
+                }
+            });
+
+            // 然后检查主菜单项
+            if (!foundSubmenu) {
+                $('.sidebar-menu > li:not(.has-submenu) > a').each(function() {
+                    const href = $(this).attr('href');
+                    if (currentPath === href) {
+                        $(this).parent().addClass('active');
+                    }
+                });
+            }
+
+            // 子菜单展开/收起 - 点击时展开，再点击时收起
+            $('.sidebar-menu > li.has-submenu > a').click(function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).parent().toggleClass('active');
+            });
+
+            // 子菜单项点击 - 保持父菜单展开
+            $('.sidebar-submenu > li > a').click(function(e) {
+                // 保持父菜单展开
+                $(this).closest('.has-submenu').addClass('active');
+
+                // 移动端点击后收起侧边栏
+                if ($(window).width() <= 768) {
+                    $('.sidebar').removeClass('active');
+                }
+            });
+
+            // 响应式侧边栏切换
+            $('.navbar-toggle').click(function() {
+                $('.sidebar').toggleClass('active');
+            });
+
+            // 移动端点击侧边栏菜单项后收起侧边栏
+            if ($(window).width() <= 768) {
+                $('.sidebar-menu > li:not(.has-submenu) > a').click(function() {
+                    $('.sidebar').removeClass('active');
+                });
+            }
+
+            // 简单的下拉菜单实现
+            $('.user-menu .dropdown-toggle').click(function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).parent().toggleClass('open');
+            });
+
+            // 点击页面其他地方关闭下拉菜单
+            $(document).click(function(e) {
+                if (!$(e.target).closest('.user-menu').length) {
+                    $('.user-menu .dropdown').removeClass('open');
+                }
+            });
+
+            // 自动关闭消息提示（5秒后）
+            $('.alert').each(function() {
+                var $alert = $(this);
+                setTimeout(function() {
+                    $alert.fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 5000);
+            });
+
+            // 手动关闭消息提示
+            $('.alert .close').click(function() {
+                $(this).closest('.alert').fadeOut('slow', function() {
+                    $(this).remove();
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

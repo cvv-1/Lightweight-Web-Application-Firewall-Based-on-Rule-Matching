@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% comment %} <div class="header">后台管理页面</div>
+    <div class="item">
+        <p><a href="/cmdb/detail/">用户信息</a></p>
+        <p><a >用户组</a></p>
+    </div>
+    <div class="content">
+        <h1 style="height: 100px">编辑用户</h1> {% endcomment %}
+
+{% comment %} <form method="post" action="/cmdb/user_edit-{{ obj.id }}/">
+            <input type="text" name="content" value='{{ obj.content}}' >
+            <input type="action" name="action" value='{{ obj.action}}'>
+            <input type="submit" value="提交">
+        </form> {% endcomment %}
+
+{% comment %} </div> {% endcomment %}
+{% block content %}
+<style>
+    /* 美化规则创建页面 */
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 30px;
+    }
+    .form-title {
+        margin-bottom: 30px;
+        color: #333;
+        font-size: 24px;
+        font-weight: 600;
+        text-align: center;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+    .form-control:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    .form-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        background-color: white;
+        cursor: pointer;
+    }
+    .form-select:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    .form-textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        resize: vertical;
+        min-height: 100px;
+    }
+    .form-textarea:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    .form-actions {
+        text-align: center;
+        margin-top: 30px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+        padding: 10px 30px;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        margin-right: 10px;
+    }
+    .btn-secondary:hover {
+        background-color: #545b62;
+        border-color: #4e555b;
+    }
+    .form-note {
+        color: #6c757d;
+        font-size: 12px;
+        margin-top: 5px;
+        font-style: italic;
+    }
+</style>
+
+<div id="page-wrapper">
+    <div id="page-inner">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="page-header">
+                    <i class="fa fa-plus-circle"></i> 新增规则 <small>添加新的WAF防护规则</small>
+                </h1>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-container">
+                    <h2 class="form-title"><i class="fa fa-shield"></i> 新建规则</h2>
+                    
+                    <form action="/rule_create" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="rule_type">规则类型 *</label>
+                            <select class="form-select" name="rule_type" id="rule_type" required>
+                                <option value="" disabled selected>请选择规则类型</option>
+                                {% for type_key, type_name in rule_types %}
+                                <option value="{{ type_key }}">{{ type_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="description">规则描述 *</label>
+                            <input type="text" class="form-control" name="description" id="description" 
+                                   placeholder="请输入规则描述（如：SQL注入防护规则）" required>
+                            <div class="form-note">请提供清晰的描述，以便于识别规则用途</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="content">规则内容</label>
+                            <textarea class="form-textarea" name="content" id="content" 
+                                      placeholder="请输入规则内容（正则表达式）"></textarea>
+                            <div class="form-note">请输入规则的具体正则表达式</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="action">动作 *</label>
+                            <select class="form-select" name="action" id="action" required>
+                                <option value="" disabled selected>请选择处理动作</option>
+                                {% for action_key, action_name in action_choices %}
+                                <option value="{{ action_key }}">{{ action_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <a href="/rule" class="btn-secondary">
+                                <i class="fa fa-arrow-left"></i> 返回规则列表
+                            </a>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa fa-save"></i> 保存规则
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 根据规则类型自动设置默认描述
+    document.getElementById('rule_type').addEventListener('change', function() {
+        const descriptionField = document.getElementById('description');
+        
+        if (this.value === 'SQLI' && !descriptionField.value) {
+            descriptionField.value = 'SQL注入防护规则';
+        } else if (this.value === 'SSRF' && !descriptionField.value) {
+            descriptionField.value = 'SSRF服务端请求伪造防护规则';
+        } else if (this.value === 'XSS' && !descriptionField.value) {
+            descriptionField.value = 'XSS跨站脚本防护规则';
+        } else if (this.value === 'CSRF' && !descriptionField.value) {
+            descriptionField.value = 'CSRF跨站请求伪造防护规则';
+        } else if (this.value === 'RCE' && !descriptionField.value) {
+            descriptionField.value = '命令执行防护规则';
+        } else if (this.value === 'XXE' && !descriptionField.value) {
+            descriptionField.value = 'XML外部实体注入防护规则';
+        } else if (this.value === 'DESER' && !descriptionField.value) {
+            descriptionField.value = '反序列化漏洞防护规则';
+        } else if (this.value === 'PTR' && !descriptionField.value) {
+            descriptionField.value = '路径遍历防护规则';
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    /* 简化风格的白名单编辑页面 */
+    .form-container {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .form-header {
+        background-color: #f9e6e6;
+        padding: 10px 15px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-content {
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    .btn-submit {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 3px;
+        cursor: pointer;
+        text-decoration: none;
+        margin-right: 10px;
+    }
+    .btn-submit:hover {
+        background-color: #45a049;
+        color: white;
+    }
+    .btn-back {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 3px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn-back:hover {
+        background-color: #5a6268;
+        color: white;
+    }
+    .form-actions {
+        margin-top: 20px;
+    }
+    .error-message {
+        padding: 10px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+    .info-box {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border-left: 4px solid #17a2b8;
+    }
+    .info-box h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #17a2b8;
+    }
+    .info-box ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    .info-box li {
+        margin-bottom: 5px;
+    }
+    .info-box code {
+        background-color: #e9ecef;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+</style>
+
+<div id="page-wrapper">
+    <div id="page-inner">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="page-header">
+                    <i class="fa fa-check-circle"></i> 编辑白名单 <small>修改允许访问规则</small>
+                </h1>
+            </div>
+        </div>
+        
+        <!-- 表单区域 -->
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="form-container">
+                    <div class="form-header">
+                        编辑白名单规则
+                    </div>
+                    <div class="form-content">
+                        {% if errors %}
+                            <div class="error-message">
+                                {{ errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="info-box">
+                            <h4>白名单功能说明</h4>
+                            <ul>
+                                <li>白名单用于允许特定URL或IP地址绕过WAF规则检查</li>
+                                <li>URL可以使用通配符，如<code>*</code>表示匹配任意字符</li>
+                                <li>IP地址格式应为标准IPv4格式，如<code>192.168.1.1</code></li>
+                                <li>URL和IP至少需要填写一项</li>
+                            </ul>
+                        </div>
+                        
+                        <form method="post" action="{% url 'Whitelist_edit' obj.id %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="url">URL:</label>
+                                <input type="text" class="form-control" id="url" name="url" value="{{ obj.url|default_if_none:'' }}" placeholder="如: example.com/* 或留空">
+                            </div>
+                            <div class="form-group">
+                                <label for="ip">IP地址:</label>
+                                <input type="text" class="form-control" id="ip" name="ip" value="{{ obj.ip|default_if_none:'' }}" placeholder="如: 192.168.1.1 或留空">
+                            </div>
+                            <div class="form-actions">
+                                <a href="{% url 'Whitelist' %}" class="btn-back">返回列表</a>
+                                <button type="submit" class="btn-submit">保存规则</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /. ROW  -->
+    </div>
+    <!-- /. PAGE INNER  -->
+</div>
+<!-- /. PAGE WRAPPER  -->
+
+<!-- JS Scripts-->
+<!-- jQuery Js -->
+<script src="{% static 'waf/js/jquery-1.10.2.js' %}"></script>
+<!-- Bootstrap Js -->
+<script src="{% static 'waf/js/bootstrap.min.js' %}"></script>
+<!-- Metis Menu Js -->
+<script src="{% static 'waf/js/jquery.metisMenu.js' %}"></script>
+<!-- Custom Js -->
+<script src="{% static 'waf/js/custom-scripts.js' %}"></script>
+
+{% endblock %}
+                 

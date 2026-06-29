@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}编辑黑名单规则 - WAF管理系统{% endblock %}
+
+{% block content %}
+<style>
+    /* 美化黑名单管理页面 */
+    .form-container {
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .form-header {
+        background-color: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        border-radius: 6px 6px 0 0;
+    }
+    .form-content {
+        padding: 20px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .form-control:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 2px rgba(220,53,69,0.25);
+    }
+    .btn-submit {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    }
+    .btn-submit:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+    .btn-back {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 10px;
+        transition: background-color 0.3s;
+    }
+    .btn-back:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+    .form-actions {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+    .error-message {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+    .info-box {
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+    .page-title {
+        margin-bottom: 20px;
+    }
+    .page-title h1 {
+        margin-bottom: 5px;
+    }
+    .subtitle {
+        font-size: 14px;
+        color: #6c757d;
+    }
+</style>
+
+<div id="page-wrapper">
+    <div id="page-inner">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="page-header">
+                    <i class="fa fa-ban"></i> 编辑黑名单 <small>修改阻止访问规则</small>
+                </h1>
+            </div>
+        </div>
+        <!-- /. ROW  -->
+        
+        <!-- 表单区域 -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-container">
+                    <div class="form-header">
+                        <h3><i class="fa fa-edit"></i> 编辑黑名单规则 #{{ obj.id }}</h3>
+                    </div>
+                    <div class="form-content">
+                        {% if errors %}
+                            <div class="error-message">
+                                {% for error in errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="info-box">
+                            <p><i class="fa fa-info-circle"></i> 请填写以下信息来编辑黑名单规则：</p>
+                        </div>
+                        
+                        <form method="post" action="{% url 'Blacklist_edit' obj.id %}">
+                            {% csrf_token %}
+                            
+                            <div class="form-group">
+                                <label for="url">URL 地址</label>
+                                <input type="text" id="url" name="url" class="form-control" value="{{ obj.url|default_if_none:'' }}" placeholder="请输入需要添加到黑名单的URL地址（如：/admin/*）">
+                                <small class="text-muted">支持通配符，留空表示针对所有URL</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="ip">IP 地址</label>
+                                <input type="text" id="ip" name="ip" class="form-control" value="{{ obj.ip|default_if_none:'' }}" placeholder="请输入需要添加到黑名单的IP地址（如：192.168.1.1）">
+                                <small class="text-muted">支持IPv4地址，留空表示针对所有IP</small>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-submit">
+                                    <i class="fa fa-save"></i> 保存修改
+                                </button>
+                                <a href="{% url 'Blacklist' %}" class="btn-back">
+                                    <i class="fa fa-arrow-left"></i> 返回
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /. ROW  -->
+    </div>
+    <!-- /. PAGE INNER  -->
+</div>
+<!-- /. PAGE WRAPPER  -->
+
+<!-- JS Scripts-->
+<!-- jQuery Js -->
+<script src="{% static 'waf/js/jquery-1.10.2.js' %}"></script>
+<!-- Bootstrap Js -->
+<script src="{% static 'waf/js/bootstrap.min.js' %}"></script>
+<!-- Metis Menu Js -->
+<script src="{% static 'waf/js/jquery.metisMenu.js' %}"></script>
+<!-- Custom Js -->
+<script src="{% static 'waf/js/custom-scripts.js' %}"></script>
+
+{% endblock %}
+                 

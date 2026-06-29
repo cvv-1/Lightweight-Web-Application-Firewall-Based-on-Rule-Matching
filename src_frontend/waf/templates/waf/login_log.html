@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="page-title">
+        <i class="fa fa-sign-in"></i> 登录日志 <small style="font-size: 14px; color: #7f8c8d; font-weight: normal;">用户登录记录</small>
+    </h1>
+
+    <!-- 搜索表单 -->
+    <div class="card">
+        <div class="card-body">
+            <form method="GET" action="">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>用户名搜索</label>
+                            <input type="text" class="form-control" name="username" value="{{ username_search }}" placeholder="输入用户名">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>IP地址搜索</label>
+                            <input type="text" class="form-control" name="ip" value="{{ ip_search }}" placeholder="输入IP地址">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>登录状态</label>
+                            <select class="form-control" name="status">
+                                <option value="">全部</option>
+                                {% for status_value, status_name in status_choices %}
+                                    <option value="{{ status_value }}" {% if status_search == status_value %}selected{% endif %}>{{ status_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 text-right">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                        <a href="{% url 'login_log' %}" class="btn btn-default">重置</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 日志列表 -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title" style="margin-top: 0; margin-bottom: 15px;">
+                <i class="fa fa-list-alt"></i> 登录日志列表
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>登录时间</th>
+                            <th>IP地址</th>
+                            <th>登录状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in latest_log_list %}
+                        <tr>
+                            <td><strong>{{ log.user.username }}</strong></td>
+                            <td>{{ log.login_time|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ log.ip_address }}</td>
+                            <td>
+                                {% if log.status == 'SUCCESS' %}
+                                    <span class="label label-success">成功</span>
+                                {% else %}
+                                    <span class="label label-danger">失败</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.remark }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">暂无登录日志</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" style="margin-top: 10px;">
+                <nav>
+                    <ul class="pagination">
+                        {% if page.has_previous %}
+                        <li>
+                            <a href="?page={{ page.previous_page_number }}{% if username_search %}&username={{ username_search }}{% endif %}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if status_search %}&status={{ status_search }}{% endif %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in dis_range %}
+                        <li class="{% if num == page.number %}active{% endif %}">
+                            <a href="?page={{ num }}{% if username_search %}&username={{ username_search }}{% endif %}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if status_search %}&status={{ status_search }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+
+                        {% if page.has_next %}
+                        <li>
+                            <a href="?page={{ page.next_page_number }}{% if username_search %}&username={{ username_search }}{% endif %}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if status_search %}&status={{ status_search }}{% endif %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}

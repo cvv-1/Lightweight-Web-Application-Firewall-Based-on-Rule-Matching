@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; align-items: center; justify-content: center; min-height: 60vh;">
+    <div style="text-align: center; max-width: 500px;">
+        <!-- 错误图标 -->
+        <div style="margin-bottom: 30px;">
+            <i class="fa fa-lock" style="font-size: 80px; color: #e74c3c; opacity: 0.8;"></i>
+        </div>
+
+        <!-- 错误标题 -->
+        <h1 style="font-size: 36px; color: #2c3e50; margin-bottom: 15px; font-weight: 600;">
+            权限不足
+        </h1>
+
+        <!-- 错误描述 -->
+        <p style="font-size: 16px; color: #7f8c8d; margin-bottom: 30px; line-height: 1.6;">
+            抱歉，您没有权限执行此操作。<br>
+            如果您认为这是一个错误，请联系系统管理员。
+        </p>
+
+        <!-- 错误代码 -->
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 30px; border-left: 4px solid #e74c3c;">
+            <p style="margin: 0; color: #666; font-size: 14px;">
+                <strong>错误代码：</strong> 403 Forbidden
+            </p>
+        </div>
+
+        <!-- 用户信息 -->
+        <div style="background-color: #f0f7ff; padding: 15px; border-radius: 4px; margin-bottom: 30px; border-left: 4px solid #3498db;">
+            <p style="margin: 0; color: #2c3e50; font-size: 14px;">
+                <strong>当前用户：</strong> {{ user.username }} ({{ user.get_user_type_display }})
+            </p>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <a href="javascript:history.back()" class="btn btn-default" style="padding: 10px 30px; font-size: 14px;">
+                <i class="fa fa-arrow-left"></i> 返回上一页
+            </a>
+            <a href="{% url 'index' %}" class="btn btn-primary" style="padding: 10px 30px; font-size: 14px;">
+                <i class="fa fa-home"></i> 返回首页
+            </a>
+        </div>
+
+        <!-- 提示信息 -->
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e9ecef;">
+            <p style="color: #95a5a6; font-size: 13px; margin: 0;">
+                <i class="fa fa-info-circle"></i>
+                如需获得此权限，请联系管理员为您分配相应的权限。
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

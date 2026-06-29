@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="page-title">
+        <i class="fa fa-lock"></i> 权限管理 <small style="font-size: 14px; color: #7f8c8d; font-weight: normal;">为用户 {{ target_user.username }} 分配权限</small>
+    </h1>
+
+    <!-- 权限分配表单 -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title mb-3">
+                <i class="fa fa-user-circle"></i> 用户信息
+            </h3>
+            <div style="margin-bottom: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px;">
+                    <strong>用户名：</strong>{{ target_user.username }} &nbsp;&nbsp;
+                    <strong>用户类型：</strong><span class="label label-info">{{ target_user.get_user_type_display }}</span>
+                </p>
+            </div>
+
+            <!-- 权限说明 -->
+            <div style="margin-bottom: 20px; padding: 12px; background-color: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 2px;">
+                <p style="margin: 0; font-size: 13px; color: #1565c0;">
+                    <i class="fa fa-info-circle"></i> <strong>提示：</strong>分配"管理"权限时会自动包含对应的"查看"权限。例如：分配"管理白名单"会自动分配"查看白名单"权限。
+                </p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% for category, permissions in permissions_by_category.items %}
+                <h3 class="card-title mb-3" style="margin-top: 30px;">
+                    <i class="fa fa-folder-open"></i> {{ category }}
+                </h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="80" class="text-center">选择</th>
+                                <th>权限名称</th>
+                                <th>权限描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for perm in permissions %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="permissions" value="{{ perm.id }}"
+                                           {% if perm.id in user_permission_ids %}checked{% endif %}
+                                           style="width: 18px; height: 18px; cursor: pointer;">
+                                </td>
+                                <td><strong>{{ perm.name }}</strong></td>
+                                <td style="color: #6c757d;">{{ perm.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% empty %}
+                <div style="padding: 20px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; color: #856404;">
+                    <i class="fa fa-exclamation-triangle"></i> 暂无可分配的权限。
+                </div>
+                {% endfor %}
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> 保存权限
+                    </button>
+                    <a href="{% url 'user_list' %}" class="btn btn-default" style="margin-left: 10px;">
+                        <i class="fa fa-arrow-left"></i> 返回用户列表
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

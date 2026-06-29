@@ -1,0 +1,91 @@
+/* Modern Dashboard Theme */
+
+:root{
+    --primary:#3f8cff; /* 蓝色主色 */
+    --primary-600:#2f77e6;
+    --bg:#f4f6f8;
+    --text:#2a2f45;
+    --muted:#8a90a2;
+    --card:#ffffff;
+    --sidebar:#1f2430;
+    --sidebar-active:#10131a;
+    --sidebar-text:#d7dbe7;
+    --border:#e6e8ee;
+}
+
+html,body{background:var(--bg); color:var(--text);} 
+
+/* 顶部导航 */
+.top-navbar{background:#ffffff; border:0; box-shadow:0 1px 3px rgba(16,24,40,.06); z-index:1000;}
+.top-navbar .navbar-header{padding-left:0;}
+.navbar-brand{font-weight:700; color:var(--text)!important; padding:12px 10px;}
+
+/* 侧边栏 */
+.navbar-side{background:var(--sidebar);} 
+.navbar-side .nav>li>a{color:var(--sidebar-text); padding:12px 18px; border-left:3px solid transparent; display:flex; align-items:center; gap:10px;}
+.navbar-side .nav>li>a:hover{background:var(--sidebar-active); color:#fff; border-left-color:var(--primary);} 
+.navbar-side .nav>li>a .fa{opacity:.9;}
+
+/* 页面容器 */
+#page-wrapper{padding:20px 24px;}
+
+/* 卡片/面板 */
+.panel{border:0; border-radius:10px; box-shadow:0 6px 16px rgba(16,24,40,.08);} 
+.panel-heading{background:transparent!important; border-bottom:1px solid var(--border)!important; font-weight:600;}
+.panel-body{background:var(--card);} 
+
+/* 表格 */
+.table{background:var(--card);}
+.table>thead>tr>th{background:#f9fafb; color:#475467; font-weight:600;}
+.table>tbody>tr:hover{background:#fafcff;}
+.table>tbody>tr>td, .table>thead>tr>th{border-color:var(--border);} 
+
+/* 按钮 */
+.btn{border-radius:8px;}
+.btn-primary{background:var(--primary); border-color:var(--primary);} 
+.btn-primary:hover{background:var(--primary-600); border-color:var(--primary-600);} 
+.btn-default{background:#fff; border-color:var(--border); color:#344054;}
+.btn-default:hover{background:#f7f8fa;}
+.btn-danger{background:#ef4444; border-color:#ef4444;}
+.btn-info{background:#06b6d4; border-color:#06b6d4;}
+.btn-success{background:#22c55e; border-color:#22c55e;}
+
+/* 标题与徽章 */
+.page-header{border-bottom:0; font-weight:700;}
+
+/* 表单 */
+.form-control{border-radius:8px; border-color:var(--border);} 
+.form-control:focus{border-color:var(--primary); box-shadow:0 0 0 3px rgba(63,140,255,.15);} 
+.control-label{color:#475467;}
+
+/* 统计卡片快捷样式（可用于首页） */
+.kpi{display:flex; align-items:center; gap:16px; background:var(--card); padding:16px; border-radius:12px; box-shadow:0 6px 16px rgba(16,24,40,.06);} 
+.kpi .icon{width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:#eef4ff; color:var(--primary);} 
+.kpi .title{font-size:12px; color:var(--muted);}
+.kpi .value{font-size:20px; font-weight:700;}
+
+/* 细节 */
+.text-muted{color:var(--muted);} 
+hr{border-color:var(--border);} 
+
+/* ===== Collapsible sidebar ===== */
+/* 默认宽度（展开） */
+.navbar-side{width:180px; position:fixed; top:50px; bottom:0; left:0; overflow-y:auto; transition:width .2s ease;} 
+#page-wrapper{margin-left:180px; transition:margin-left .2s ease;}
+
+/* 收起状态：仅显示图标 */
+body.sidebar-collapsed .navbar-side{width:60px;}
+body.sidebar-collapsed #page-wrapper{margin-left:60px;}
+body.sidebar-collapsed .navbar-side .nav>li>a .nav-text{display:none;}
+body.sidebar-collapsed .navbar-side .nav>li>a{justify-content:center;}
+
+/* 悬停时临时展开 */
+body.sidebar-collapsed .navbar-side:hover{width:180px;}
+body.sidebar-collapsed .navbar-side:hover + #page-wrapper{margin-left:180px;}
+body.sidebar-collapsed .navbar-side:hover .nav-text{display:inline;}
+
+/* 顶部系统名称可见性提升 */
+.top-navbar .navbar-brand.main-title{color:var(--primary)!important; font-size:20px; font-weight:800; letter-spacing:.2px; margin-left:0;}
+.top-navbar .navbar-brand.main-title i{margin-right:6px;}
+.top-navbar #sidebarToggle{color:#475467!important; padding-left:10px; margin-left:0;}
+

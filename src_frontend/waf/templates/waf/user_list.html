@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="page-title">
+        <i class="fa fa-users"></i> 用户管理 <small style="font-size: 14px; color: #7f8c8d; font-weight: normal;">系统用户列表</small>
+    </h1>
+
+    <!-- 用户列表 -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title mb-3">
+                <i class="fa fa-list-alt"></i> 用户列表
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>用户ID</th>
+                            <th>用户名</th>
+                            <th>用户类型</th>
+                            <th>邮箱</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                {% if user.user_type == 'ADMIN' %}
+                                    <span class="label label-danger">{{ user.get_user_type_display }}</span>
+                                {% else %}
+                                    <span class="label label-info">{{ user.get_user_type_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email|default:'无' }}</td>
+                            <td>{{ user.date_joined|date:'Y-m-d H:i:s' }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    {% if user.user_type == 'NORMAL' %}
+                                    <a href="{% url 'user_permissions' user.id %}" class="btn btn-warning btn-sm">
+                                        <i class="fa fa-lock"></i> 权限管理
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'user_reset_password' user.id %}" class="btn btn-primary btn-sm">
+                                        <i class="fa fa-key"></i> 重置密码
+                                    </a>
+                                    {% if not user.is_superuser or users|length > 1 %}
+                                    <a href="{% url 'user_del' user.id %}" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除用户{{ user.username }}吗？');">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </a>
+                                    {% else %}
+                                    <span class="btn btn-danger btn-sm disabled">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

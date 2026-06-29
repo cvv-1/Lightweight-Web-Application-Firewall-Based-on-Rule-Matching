@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="page-title">
+        <i class="fa fa-home"></i> 站点管理 <small style="font-size: 14px; color: #7f8c8d; font-weight: normal;">网站代理配置</small>
+    </h1>
+    
+    <!-- 操作区域 -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    {% if 'manage_sites' in user_permissions or user.user_type == 'ADMIN' %}
+                    <a href="/Site_create" class="btn btn-primary">
+                        <i class="fa fa-plus"></i> 新增站点
+                    </a>
+                    <a href="/Site_apply" class="btn btn-success" style="margin-left: 8px;">
+                        <i class="fa fa-check"></i> 应用站点变更
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 站点列表 -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title mb-3">
+                <i class="fa fa-list-alt"></i> 站点列表
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>监听</th>
+                            <th>上游</th>
+                            <th>启用</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in Site_list %}
+                        <tr>
+                            <td>{{ s.id }}</td>
+                            <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ s.name }}">{{ s.name }}</td>
+                            <td>{{ s.proxy_host }}:{{ s.proxy_port }}</td>
+                            <td>{{ s.real_host }}:{{ s.real_port }}</td>
+                            <td>
+                                {% if s.enabled %}
+                                    <span class="label label-success">是</span>
+                                {% else %}
+                                    <span class="label label-default">否</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    {% if 'manage_sites' in user_permissions or user.user_type == 'ADMIN' %}
+                                    <a class="btn btn-success btn-sm" href="/Site_edit-{{ s.id }}/">
+                                        <i class="fa fa-pencil"></i> 编辑
+                                    </a>
+                                    <a class="btn btn-danger btn-sm" href="/Site_del-{{ s.id }}/" onclick="return confirm('确定要删除这个站点吗？');">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">暂无站点数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

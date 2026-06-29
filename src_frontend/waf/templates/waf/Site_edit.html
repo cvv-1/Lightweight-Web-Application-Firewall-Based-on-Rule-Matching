@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    /* 美化站点编辑页面 */
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 30px;
+    }
+    .form-title {
+        margin-bottom: 30px;
+        color: #333;
+        font-size: 24px;
+        font-weight: 600;
+        text-align: center;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+    .form-control:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    .form-checkbox {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+    .form-checkbox input[type="checkbox"] {
+        width: auto;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+    .form-checkbox label {
+        margin-bottom: 0;
+        cursor: pointer;
+        font-weight: normal;
+    }
+    .form-actions {
+        text-align: center;
+        margin-top: 30px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+        padding: 10px 30px;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        border: none;
+    }
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        margin-right: 10px;
+        display: inline-block;
+    }
+    .btn-secondary:hover {
+        background-color: #545b62;
+        border-color: #4e555b;
+    }
+    .form-note {
+        color: #6c757d;
+        font-size: 12px;
+        margin-top: 5px;
+        font-style: italic;
+    }
+    .site-id-display {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 4px;
+        border-left: 4px solid #007bff;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div id="page-wrapper">
+    <div id="page-inner">
+	<div class="row">
+            <div class="col-md-12">
+			<h1 class="page-header">
+				<i class="fa fa-pencil"></i> 编辑站点 <small>修改站点配置</small>
+			</h1>
+							</div>
+						</div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-container">
+                    <h2 class="form-title"><i class="fa fa-home"></i> 编辑站点</h2>
+                    
+                    <div class="site-id-display">
+                        <strong>站点ID:</strong> {{ obj.id }}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+						<div class="form-group">
+                            <label class="form-label" for="name">名称 *</label>
+                            <input type="text" class="form-control" name="name" id="name" 
+                                   value="{{ obj.name }}" required>
+                            <div class="form-note">站点的显示名称</div>
+							</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="proxy_host">监听地址 *</label>
+                            <input type="text" class="form-control" name="proxy_host" id="proxy_host" 
+                                   value="{{ obj.proxy_host }}" required>
+                            <div class="form-note">WAF监听请求的IP地址（如：0.0.0.0 表示监听所有接口）</div>
+						</div>
+                        
+						<div class="form-group">
+                            <label class="form-label" for="proxy_port">监听端口 *</label>
+                            <input type="number" min="1" max="65535" class="form-control" name="proxy_port" id="proxy_port" 
+                                   value="{{ obj.proxy_port }}" required>
+                            <div class="form-note">WAF监听请求的端口号（1-65535）</div>
+							</div>
+                        
+						<div class="form-group">
+                            <label class="form-label" for="real_host">上游主机 *</label>
+                            <input type="text" class="form-control" name="real_host" id="real_host" 
+                                   value="{{ obj.real_host }}" required>
+                            <div class="form-note">后端服务器的IP地址或域名</div>
+							</div>
+                        
+						<div class="form-group">
+                            <label class="form-label" for="real_port">上游端口 *</label>
+                            <input type="number" min="1" max="65535" class="form-control" name="real_port" id="real_port" 
+                                   value="{{ obj.real_port }}" required>
+                            <div class="form-note">后端服务器的端口号（1-65535）</div>
+							</div>
+                        
+						<div class="form-group">
+                            <div class="form-checkbox">
+                                <input type="checkbox" name="enabled" id="enabled" {% if obj.enabled %}checked{% endif %}>
+                                <label for="enabled">启用此站点</label>
+								</div>
+                            <div class="form-note">启用后，WAF将开始监听并转发该站点的请求</div>
+							</div>
+                        
+                        <div class="form-actions">
+                            <a href="/Site" class="btn-secondary">
+                                <i class="fa fa-arrow-left"></i> 返回站点列表
+                            </a>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa fa-save"></i> 保存修改
+                            </button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

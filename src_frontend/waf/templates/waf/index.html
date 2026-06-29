@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <style>
+        /* 自定义样式 */
+        .dashboard-section {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        .dashboard-section:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .dashboard-section:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 状态卡片样式 */
+        .status-cards .stat-card {
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .status-cards .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .status-cards .stat-card i {
+            font-size: 36px;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        .status-cards .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .status-cards .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* 饼图卡片样式 */
+        .chart-container {
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .easypiechart {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .easypiechart .percent {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* 流量分析表格 */
+        .traffic-table th, .traffic-table td {
+            text-align: center;
+        }
+        
+        /* 颜色方案 */
+        .bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-success {
+            background: linear-gradient(135deg, #26d0ce 0%, #1a2980 100%);
+        }
+        
+        .bg-warning {
+            background: linear-gradient(135deg, #ffb88c 0%, #de6262 100%);
+        }
+        
+        .bg-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+        
+        .bg-info {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+        }
+        
+        /* 图表标题 */
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        /* 线状图样式 */
+        .line-chart-container {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .chart-canvas {
+            max-height: 100%;
+            width: 100%;
+        }
+        
+        /* 图表图例样式 */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 5px;
+        }
+    </style>
+    
+    <!-- 页面标题 -->
+    <div id="page-wrapper">
+        <div id="page-inner">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="page-header">
+                        <i class="fa fa-dashboard"></i> 安全状态总览 <small>实时监控网站安全状况，分析流量趋势与威胁情况</small>
+                    </h1>
+                </div>
+            </div>
+    
+    <!-- 关键指标卡片 -->
+    <div class="dashboard-section row status-cards mb-4">
+        <div class="col-md-3">
+            <div class="stat-card bg-primary">
+
+                <div class="stat-value">{{ flowsum|default:'0' }}</div>
+                <div class="stat-label">流量总数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-success">
+
+                <div class="stat-value">{{ rulesum|default:'5' }}</div>
+                <div class="stat-label">规则总数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-warning">
+
+                <div class="stat-value">{{ monitor_duration|default:'0h' }}</div>
+                <div class="stat-label">监控时长</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-info">
+
+                <div class="stat-value">{{ sitesum|default:'0' }}</div>
+                <div class="stat-label">保护站点</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 流量分布饼图 -->
+    <div class="dashboard-section row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-title">可疑流量 (LOG)</div>
+                    <div class="chart-container">
+                        <div class="easypiechart" id="easypiechart-orange" data-percent="{{ lograte|default:'0.0' }}">
+                            <span class="percent">{{ lograte|default:'0.0' }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-title">正常流量 (PASS)</div>
+                    <div class="chart-container">
+                        <div class="easypiechart" id="easypiechart-teal" data-percent="{{ passrate|default:'00.00' }}">
+                            <span class="percent">{{ passrate|default:'00.00' }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-title">恶意流量 (BLOCK)</div>
+                    <div class="chart-container">
+                        <div class="easypiechart" id="easypiechart-red" data-percent="{{ blockrate|default:'00.00' }}">
+                            <span class="percent">{{ blockrate|default:'00.00' }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 攻击趋势统计线状图 -->
+    <div class="dashboard-section mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-3">最近24小时攻击趋势</h3>
+                <div class="line-chart-container" style="position: relative; height: 400px; width: 100%;">
+                    <!-- 使用canvas元素替代静态SVG -->
+                    <canvas id="attackTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近拦截记录 -->
+    <div class="dashboard-section">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-3">最近拦截记录</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover traffic-table">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>IP地址</th>
+                                <th>请求URL</th>
+                                <th>攻击类型</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_block_logs %}
+                                {% for log in recent_block_logs %}
+                                    <tr>
+                                        <td>{{ log.time }}</td>
+                                        <td>{{ log.ip }}</td>
+                                        <td>{{ log.url }}</td>
+                                        <td>
+                                            {% if log.reason %}
+                                                {{ log.reason }}
+                                            {% else %}
+                                                {% with url_lower=log.url.lower %}
+                                                {% if 'script' in url_lower or 'xss' in url_lower %}XSS跨站脚本攻击
+                                                {% elif 'select' in url_lower or 'insert' in url_lower or 'update' in url_lower or 'delete' in url_lower or 'union' in url_lower or '1=' in url_lower or 'or' in url_lower or 'and' in url_lower or "'" in log.url or '"' in log.url or '--' in log.url or '/*' in log.url or '#' in log.url %}SQL注入攻击
+                                                {% elif 'admin' in url_lower or 'login' in url_lower or 'auth' in url_lower %}暴力破解攻击
+                                                {% elif 'etc' in url_lower or '../' in url_lower %}路径遍历攻击
+                                                {% elif '.zip' in url_lower or '.rar' in url_lower or '.tar' in url_lower or '.backup' in url_lower %}敏感文件访问
+                                                {% elif 'csrf' in url_lower or 'token' in url_lower or 'csrf_token' in url_lower %}CSRF攻击
+                                                {% else %}根据WAF规则检测到潜在威胁
+                                                {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+                                        </td>
+                                        <td><span class="label label-danger">拦截</span></td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">暂无拦截记录</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-right mt-2">
+                    <a href="/log" class="btn btn-sm btn-primary">查看全部</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 为饼图添加动画效果
+            setTimeout(function() {
+                $('.easypiechart').each(function() {
+                    $(this).easyPieChart({
+                        easing: 'easeOutBounce',
+                        barColor: function() {
+                            var id = $(this).attr('id');
+                            if (id === 'easypiechart-orange') return '#f39c12';
+                            if (id === 'easypiechart-teal') return '#2ecc71';
+                            if (id === 'easypiechart-red') return '#e74c3c';
+                            return '#3498db';
+                        },
+                        trackColor: '#ecf0f1',
+                        scaleColor: false,
+                        lineWidth: 8,
+                        size: 120,
+                        animate: 1500,
+                        onStep: function(from, to, percent) {
+                            $(this.el).find('.percent').text(Math.round(percent) + '%');
+                        }
+                    });
+                });
+            }, 500);
+            
+            // 攻击趋势统计图表 - 使用Chart.js动态渲染
+            // 首先检查Chart.js是否已加载，如果没有则动态加载
+            console.log('开始加载图表...');
+            console.log('Hourly labels:', {{ hourly_labels|default:'[]'|safe }});
+            console.log('Hourly attack data:', {{ hourly_attack_data|default:'{}'|safe }});
+            
+            if (typeof Chart === 'undefined') {
+                console.log('Chart.js未加载，开始动态加载...');
+                var script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
+                script.onload = function() {
+                    console.log('Chart.js加载成功');
+                    initChart();
+                };
+                script.onerror = function() {
+                    console.error('Chart.js加载失败');
+                    document.getElementById('attackTrendChart').parentNode.innerHTML = 
+                        '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: #e74c3c;">'+ 
+                        '图表库加载失败，请检查网络连接' +
+                        '</div>';
+                };
+                document.head.appendChild(script);
+            } else {
+                console.log('Chart.js已加载，开始初始化图表');
+                initChart();
+            }
+            
+            function initChart() {
+                console.log('开始初始化图表...');
+                try {
+                    // 从后端获取按“规则类型”统计的真实数据
+                    var hourlyAttackData = {{ hourly_attack_data|default:'{}'|safe }} || {};
+                    
+                    // 根据规则类型动态生成数据集
+                    var labels = {{ hourly_labels|default:'[]'|safe }};
+                    var datasets = [];
+                    
+                    // 预设一组颜色，用于不同规则类型
+                    var colors = [
+                        '#ff6384', '#36a2eb', '#ffcd56',
+                        '#4bc0c0', '#9966ff', '#ff9f40',
+                        '#2ecc71', '#e74c3c'
+                    ];
+                    
+                    var typeNames = Object.keys(hourlyAttackData);
+                    typeNames.forEach(function(typeName, index) {
+                        var color = colors[index % colors.length];
+                        datasets.push({
+                            label: typeName, // 直接使用规则类型中文名称
+                            data: hourlyAttackData[typeName] || [],
+                            borderColor: color,
+                            backgroundColor: Chart.helpers.color(color).alpha(0.1).rgbString(),
+                            tension: 0.35,
+                            fill: false,
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointHoverRadius: 4
+                        });
+                    });
+                    
+                    var data = {
+                        labels: labels,
+                        datasets: datasets
+                    };
+                    
+                    // 图表配置
+                    var options = {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.parsed.y + ' 次';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0    // 只显示整数
+                                }
+                            }
+                        }
+                    };
+                    
+                    // 创建图表
+                    var canvas = document.getElementById('attackTrendChart');
+                    if (canvas) {
+                        var ctx = canvas.getContext('2d');
+                        var chart = new Chart(ctx, {
+                            type: 'line',
+                            data: data,
+                            options: options
+                        });
+                        
+                        // 窗口大小改变时重绘
+                        window.addEventListener('resize', function() {
+                            chart.resize();
+                        });
+                    }
+                } catch (e) {
+                    console.error('图表初始化失败:', e);
+                }
+            }
+        });
+    </script>
+        </div>
+    </div>
+{% endblock %}

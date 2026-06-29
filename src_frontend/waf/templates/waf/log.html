@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+    <h1 class="page-title">
+        <i class="fa fa-file-text"></i> 日志管理
+        <small style="font-size: 14px; color: #7f8c8d; margin-left: 8px;">日志查询与分析</small>
+    </h1>
+
+    <!-- 搜索表单 -->
+    <div class="card">
+        <div class="card-body">
+            <!-- 搜索表单保持独立 -->
+            <form method="GET" action="">
+                                <input type="hidden" name="template" value="log">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>IP地址搜索</label>
+                                            <input type="text" class="form-control" name="ip" value="{{ ip_search }}" placeholder="输入IP地址">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>时间搜索</label>
+                                            <input type="text" class="form-control" name="time" value="{{ time_search }}" placeholder="例如: 2023-05-20 或 14:30">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>动作类型</label>
+                                            <select class="form-control" name="action">
+                                                <option value="">全部</option>
+                                                {% for action_value, action_name in action_choices %}
+                                                    <option value="{{ action_value }}" {% if action_search == action_value %}selected{% endif %}>{{ action_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                <div class="row">
+                    <div class="col-md-12 text-right">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                        <a href="{% url 'log' %}" class="btn btn-default">重置</a>
+                        {% if 'export_logs' in user_permissions or user.user_type == 'ADMIN' %}
+                        <button type="button" class="btn btn-success" id="export_btn" onclick="exportLogs()">
+                            <i class="fa fa-download"></i> 导出日志
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+
+            <!-- 导出表单（隐藏） -->
+            <form id="export_form" method="POST" action="{% url 'log_export' %}" style="display: none;">
+                {% csrf_token %}
+            </form>
+            
+            <!-- 批量删除按钮放置在搜索选项下方 -->
+            <div class="mb-3" style="margin-top: 10px;">
+                {% if 'delete_logs' in user_permissions or user.user_type == 'ADMIN' %}
+                <form id="batch_del_form" method="post" action="{% url 'log' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" id="batch_del_btn" disabled="disabled">批量删除选中的日志</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志表格 -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title" style="margin-top: 0; margin-bottom: 15px;">
+                日志列表
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="select_all" />
+                            </th>
+                            <th>ID</th>
+                            <th>时间</th>
+                            <th>IP地址</th>
+                            <th>URL</th>
+                            <th>动作</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in latest_log_list %}
+                        <tr class="{% if log.action == 'BLOCK' %}danger{% elif log.action == 'LOG' %}warning{% else %}success{% endif %}">
+                            <td>
+                                <input type="checkbox" name="log_ids" class="log_checkbox" value="{{ log.id }}">
+                            </td>
+                            <td>{{ log.id }}</td>
+                            <td>{{ log.time }}</td>
+                            <td>{{ log.ip }}</td>
+                            <td>{{ log.url|truncatechars:50 }}</td>
+                            <td>
+                                {% if log.action == 'BLOCK' %}<span class="label label-danger">阻断</span>{% elif log.action == 'LOG' %}<span class="label label-warning">记录</span>{% else %}<span class="label label-success">放行</span>{% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'log_detail' log.id %}" class="btn btn-info btn-xs">详情</a>
+                                {% if 'delete_logs' in user_permissions or user.user_type == 'ADMIN' %}
+                                <a href="{% url 'log_del' log.id %}?page={{ page.number }}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if time_search %}&time={{ time_search }}{% endif %}{% if action_search %}&action={{ action_search }}{% endif %}" class="btn btn-danger btn-xs" onclick="return confirm('确定要删除这条日志吗？');">删除</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">暂无日志记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" style="margin-top: 10px;">
+                <nav>
+                    <ul class="pagination">
+                        {% if page.has_previous %}
+                        <li>
+                            <a href="?page={{ page.previous_page_number }}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if time_search %}&time={{ time_search }}{% endif %}{% if action_search %}&action={{ action_search }}{% endif %}&template=log" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in dis_range %}
+                        <li class="{% if num == page.number %}active{% endif %}">
+                            <a href="?page={{ num }}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if time_search %}&time={{ time_search }}{% endif %}{% if action_search %}&action={{ action_search }}{% endif %}&template=log">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page.has_next %}
+                        <li>
+                            <a href="?page={{ page.next_page_number }}{% if ip_search %}&ip={{ ip_search }}{% endif %}{% if time_search %}&time={{ time_search }}{% endif %}{% if action_search %}&action={{ action_search }}{% endif %}&template=log" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 使用原生JavaScript实现全选功能，避免jQuery依赖问题
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取全选复选框元素
+            var selectAllCheckbox = document.getElementById('select_all');
+            // 获取所有日志复选框元素
+            var logCheckboxes = document.querySelectorAll('table tbody .log_checkbox');
+            // 获取批量删除按钮
+            var batchDelBtn = document.getElementById('batch_del_btn');
+            // 获取批量删除表单
+            var batchDelForm = document.getElementById('batch_del_form');
+            
+            if (selectAllCheckbox && batchDelBtn) {
+                // 全选/取消全选功能
+                selectAllCheckbox.addEventListener('change', function() {
+                    // 遍历所有日志复选框并设置相同的选中状态
+                    logCheckboxes.forEach(function(checkbox) {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    });
+                    // 更新批量删除按钮状态
+                    updateBatchDeleteButton();
+                });
+                
+                // 为每个日志复选框添加事件监听
+                logCheckboxes.forEach(function(checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        updateBatchDeleteButton();
+                        updateSelectAllState();
+                    });
+                });
+                
+                // 更新全选按钮状态
+                function updateSelectAllState() {
+                    var allChecked = true;
+                    logCheckboxes.forEach(function(checkbox) {
+                        if (!checkbox.checked) {
+                            allChecked = false;
+                        }
+                    });
+                    selectAllCheckbox.checked = allChecked && logCheckboxes.length > 0;
+                }
+                
+                // 更新批量删除按钮状态
+                function updateBatchDeleteButton() {
+                    var checkedCount = 0;
+                    logCheckboxes.forEach(function(checkbox) {
+                        if (checkbox.checked) {
+                            checkedCount++;
+                        }
+                    });
+                    batchDelBtn.disabled = checkedCount === 0;
+                }
+                
+                // 批量删除按钮点击确认
+                batchDelBtn.addEventListener('click', function() {
+                    return confirm('确定要删除选中的日志吗？');
+                });
+                
+                // 在表单提交时保留当前页面的查询参数并收集选中的日志ID
+                if (batchDelForm) {
+                    batchDelForm.addEventListener('submit', function() {
+                        // 移除之前可能存在的log_ids隐藏字段
+                        var existingHiddenFields = batchDelForm.querySelectorAll('input[name="log_ids"]');
+                        existingHiddenFields.forEach(function(field) {
+                            field.remove();
+                        });
+                        
+                        // 收集所有选中的日志ID并添加到表单中
+                        logCheckboxes.forEach(function(checkbox) {
+                            if (checkbox.checked) {
+                                var hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = 'log_ids';
+                                hiddenInput.value = checkbox.value;
+                                batchDelForm.appendChild(hiddenInput);
+                            }
+                        });
+                        
+                        var currentUrl = new URL(window.location.href);
+                        var params = currentUrl.searchParams;
+                        
+                        // 保留搜索条件参数
+                        ['ip', 'time', 'action', 'page'].forEach(function(paramName) {
+                            if (params.has(paramName)) {
+                                var hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = paramName;
+                                hiddenInput.value = params.get(paramName);
+                                batchDelForm.appendChild(hiddenInput);
+                            }
+                        });
+                    });
+                }
+            }
+        });
+
+        // 导出日志函数
+        function exportLogs() {
+            var logCheckboxes = document.querySelectorAll('table tbody .log_checkbox');
+            var checkedCount = 0;
+            var exportForm = document.getElementById('export_form');
+
+            // 移除之前可能存在的隐藏字段
+            var existingHiddenFields = exportForm.querySelectorAll('input[name="log_ids"]');
+            existingHiddenFields.forEach(function(field) {
+                field.remove();
+            });
+
+            // 收集所有选中的日志ID
+            logCheckboxes.forEach(function(checkbox) {
+                if (checkbox.checked) {
+                    checkedCount++;
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'log_ids';
+                    hiddenInput.value = checkbox.value;
+                    exportForm.appendChild(hiddenInput);
+                }
+            });
+
+            // 添加搜索条件参数
+            var currentUrl = new URL(window.location.href);
+            var params = currentUrl.searchParams;
+
+            ['ip', 'time', 'action'].forEach(function(paramName) {
+                if (params.has(paramName)) {
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = paramName;
+                    hiddenInput.value = params.get(paramName);
+                    exportForm.appendChild(hiddenInput);
+                }
+            });
+
+            // 如果没有选中任何日志，导出所有搜索结果
+            if (checkedCount === 0) {
+                exportForm.submit();
+            } else {
+                exportForm.submit();
+            }
+        }
+    </script>
+
+{% endblock %}
